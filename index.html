@@ -67,8 +67,7 @@
   </div>
 
   <script>
-    const issuedTickets = `
-tcjhs11372100
+    const issuedTickets = `tcjhs11372100
 tcjhs11372101
 tcjhs11372102
 tcjhs11372103
@@ -162,15 +161,16 @@ tcjhs11372146`.trim().split('\n');
         const videoElement = document.getElementById('video');
         videoElement.srcObject = stream;
 
+        // 初始化 Quagga 條碼掃描器
         Quagga.init({
           inputStream: {
             type: "LiveStream",
             target: videoElement,
-            constraints: { width: 480, height: 320 }
+            constraints: { width: 640, height: 480 }
           },
           decoder: {
-            readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
-          }
+            readers: ["code_128_reader", "ean_reader"]
+          },
         }, function (err) {
           if (err) {
             result.textContent = '🚫 攝影機初始化失敗：' + err;
@@ -181,7 +181,8 @@ tcjhs11372146`.trim().split('\n');
           result.textContent = '✅ 攝影機啟動，請掃描票券';
         });
 
-        Quagga.onDetected(function (data) {
+        // 監聽條碼掃描結果
+        Quagga.onDetected(function(data) {
           const code = data.codeResult.code;
           handleCode(code);
         });
@@ -189,7 +190,6 @@ tcjhs11372146`.trim().split('\n');
       } catch (err) {
         result.textContent = '🚫 無法存取攝影機：' + err;
         console.error('攝影機存取錯誤:', err);
-        alert('無法啟動攝影機，請檢查權限或設備設定。');
       }
     }
 
