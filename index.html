@@ -3,71 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>表藝課 入場系統</title>
-  <script src="quagga.min.js"></script>
+  <title>小吳組 表藝課 入場系統</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
-    body { font-family: "Arial", sans-serif; background: #f4f4f4; padding: 20px; margin: 0; }
+    body {
+      font-family: "Arial", sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
     .panel {
-      background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      flex: 1; /* 讓各個面板寬度自適應 */
     }
-    .result { font-weight: bold; margin-top: 10px; font-size: 1.2rem; }
-    .stats { display: flex; justify-content: space-between; margin: 10px 0; }
-    #video { width: 100%; max-width: 480px; margin: auto; border-radius: 8px; }
-    ul { padding-left: 20px; list-style-type: none; }
-    li { margin: 4px 0; }
+
+    .video-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 固定大小設置 */
+    #video-container {
+      width: 640px;  /* 固定寬度 */
+      height: 480px; /* 固定高度 */
+      margin-bottom: 20px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: fill; /* 填滿容器，這會使得畫面完全充滿這個固定尺寸 */
+    }
+
+    ul {
+      padding-left: 20px;
+      list-style-type: none;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
     input[type="text"] {
-      padding: 8px; font-size: 16px; width: 80%;
-      margin-right: 10px; border: 1px solid #ccc; border-radius: 4px;
+      padding: 8px;
+      font-size: 16px;
+      width: 80%;
+      margin-right: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
+
     button {
-      padding: 8px 14px; font-size: 16px;
-      background-color: #007bff; color: white;
-      border: none; border-radius: 4px;
+      padding: 8px 14px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
     }
-    button:hover { background-color: #0056b3; }
-    select {
-      padding: 8px; font-size: 16px;
-      border-radius: 4px; margin-bottom: 10px;
+
+    button:hover {
+      background-color: #0056b3;
     }
+
+    select {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+
     @media (max-width: 600px) {
-      .panel { padding: 15px; }
-      input[type="text"] { width: 70%; }
-      button { width: 100%; }
+      .panel {
+        padding: 15px;
+      }
+      input[type="text"] {
+        width: 70%;
+      }
+      button {
+        width: 100%;
+      }
+      .container {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="panel">
-    <h2>🎥 攝影機掃描</h2>
-    <div id="video"></div>
-    <div class="result" id="scan-result">攝影機初始化中...</div>
-  </div>
+  <div class="container">
+    <!-- 左側攝影機區域 -->
+    <div class="panel">
+      <h2>🎥 攝影機掃描</h2>
+      <div class="video-container">
+        <div id="video-container">
+          <video autoplay playsinline muted></video>
+        </div>
+      </div>
+      <div class="result" id="scan-result">攝影機初始化中...</div>
+    </div>
 
-  <div class="panel">
-    <h2>⌨️ 手動輸入票號</h2>
-    <input type="text" id="manual-code" placeholder="輸入票號如 tcjhs11372100" />
-    <button onclick="manualEntry()">送出</button>
-  </div>
+    <!-- 右側入場統計區域 -->
+    <div class="panel">
+      <h2>⌨️ 手動輸入票號</h2>
+      <input type="text" id="manual-code" placeholder="輸入票號如 tcjhs11372100" />
+      <button onclick="manualEntry()">送出</button>
 
-  <div class="panel">
-    <h2>📊 入場統計資訊</h2>
-    <div class="stats">
-      <div>總發行：<span id="total-count"></span></div>
-      <div>已入場：<span id="entered-count">0</span></div>
-      <div>未入場：<span id="remaining-count">0</span></div>
+      <h2>📊 入場統計資訊</h2>
+      <div class="stats">
+        <div>總發行：<span id="total-count"></span></div>
+        <div>已入場：<span id="entered-count">0</span></div>
+        <div>未入場：<span id="remaining-count">0</span></div>
+      </div>
+
+      <h2>📋 入場名單</h2>
+      <ul id="entry-list"></ul>
     </div>
   </div>
 
-  <div class="panel">
-    <h2>📋 入場名單</h2>
-    <ul id="entry-list"></ul>
-  </div>
-
   <script>
-    const issuedTickets = `tcjhs11372100
+    const issuedTickets = `
+tcjhs11372100
 tcjhs11372101
 tcjhs11372102
 tcjhs11372103
@@ -102,8 +180,11 @@ tcjhs11372145
 tcjhs11372146`.trim().split('\n');
 
     const customMessages = {
-      'tcjhs11372100': '🎉 VIP：歡迎 72100 入場！',
-      'tcjhs11372131': '💃 表演嘉賓：歡迎 72131 入場！'
+      'tcjhs11372100': '🎉 VIP：歡迎 ⟪男神老師⟫ 入場！',
+      'tcjhs11372102': '💃 系統：恭迎 ⟪執行長 王顗翔⟫ 入場！',
+      'tcjhs11372103': '💃 系統：有請 ⟪製作人 小吳⟫ 入場！',
+      'tcjhs11372112': '💃 系統：歡迎 ⟪前台經理 紹均⟫ 入場！',
+      'tcjhs11372143': '💃 系統：歡迎 ⟪總導演 溫宜芳⟫ 入場！'
     };
 
     const enteredTickets = new Set();
@@ -157,39 +238,49 @@ tcjhs11372146`.trim().split('\n');
 
     async function startScanner() {
       try {
+        // 訪問用戶攝影機
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const videoElement = document.getElementById('video');
+        const videoElement = document.querySelector('video');
         videoElement.srcObject = stream;
 
-        // 初始化 Quagga 條碼掃描器
+        // 初始化 QuaggaJS 條碼掃描
         Quagga.init({
           inputStream: {
             type: "LiveStream",
             target: videoElement,
-            constraints: { width: 640, height: 480 }
+            constraints: { width: 640, height: 480 } // 增加分辨率來提高識別率
           },
           decoder: {
-            readers: ["code_128_reader", "ean_reader"]
-          },
+            readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // 調整條碼識別格式
+          }
         }, function (err) {
           if (err) {
             result.textContent = '🚫 攝影機初始化失敗：' + err;
+            result.style.color = 'red';
             console.error(err);
             return;
           }
           Quagga.start();
           result.textContent = '✅ 攝影機啟動，請掃描票券';
+          result.style.color = 'green';
         });
 
-        // 監聽條碼掃描結果
-        Quagga.onDetected(function(data) {
+        // 條碼檢測
+        Quagga.onDetected(function (data) {
           const code = data.codeResult.code;
-          handleCode(code);
+          handleCode(code); // 處理掃描到的條碼
+          
+          enteredTickets.add(code);
+           const message = customMessages[code] || `✅ 歡迎 721${code.slice(-2)} 入場`;
+           result.textContent = message;
+           result.style.color = 'green';
         });
 
       } catch (err) {
         result.textContent = '🚫 無法存取攝影機：' + err;
+        result.style.color = 'red';
         console.error('攝影機存取錯誤:', err);
+        alert('無法啟動攝影機，請檢查權限或設備設定。');
       }
     }
 
