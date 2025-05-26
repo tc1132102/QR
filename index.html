@@ -12,12 +12,14 @@
       padding: 20px;
       margin: 0;
     }
+
     .container {
       display: flex;
       justify-content: space-between;
       gap: 20px;
       flex-wrap: wrap;
     }
+
     .panel {
       background: white;
       padding: 20px;
@@ -26,11 +28,13 @@
       flex: 1;
       min-width: 300px;
     }
+
     .video-container {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+
     #video-container {
       width: 640px;
       height: 480px;
@@ -39,23 +43,28 @@
       border-radius: 8px;
       overflow: hidden;
     }
+
     video {
       width: 100%;
       height: 100%;
       object-fit: fill;
     }
+
     ul {
       padding-left: 20px;
       list-style-type: none;
-      max-height: 200px;
+      max-height: 300px;
       overflow-y: auto;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       border-radius: 4px;
       background: #fafafa;
     }
+
     li {
       margin: 4px 0;
+      font-weight: 500;
     }
+
     input[type="text"] {
       padding: 8px;
       font-size: 16px;
@@ -64,6 +73,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+
     button {
       padding: 8px 14px;
       font-size: 16px;
@@ -74,27 +84,33 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     select {
       padding: 8px;
       font-size: 16px;
       border-radius: 4px;
       margin-bottom: 10px;
     }
+
     .stats {
       display: flex;
       justify-content: space-between;
       margin: 10px 0;
+      font-size: 18px;
     }
+
     #scan-result {
       font-size: 24px;
       font-weight: bold;
       text-align: center;
       margin-top: 10px;
-      min-height: 30px;
+      min-height: 40px;
     }
+
     @media (max-width: 600px) {
       .panel {
         padding: 15px;
@@ -104,7 +120,7 @@
       }
       button {
         width: 100%;
-        margin-top: 8px;
+        margin-top: 10px;
       }
       .container {
         flex-direction: column;
@@ -187,7 +203,7 @@ tcjhs11372142
 tcjhs11372143
 tcjhs11372144
 tcjhs11372145
-tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
+tcjhs11372146`.trim().split('\n');
 
     const customMessages = {
       'tcjhs11372100': '歡迎 男神老師 入場！',
@@ -197,7 +213,7 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
       'tcjhs11372143': '歡迎 總導演 溫宜芳 入場！'
     };
 
-        const enteredTickets = new Set();
+    const enteredTickets = new Set();
     const result = document.getElementById('scan-result');
     const totalCount = document.getElementById('total-count');
     const enteredCount = document.getElementById('entered-count');
@@ -212,8 +228,10 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
       enteredCount.textContent = enteredTickets.size;
       remainingCount.textContent = issuedTickets.length - enteredTickets.size;
     }
-      
+
     function speak(text) {
+      if (!audioEnabled) return;
+      if (isSpeaking) return;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-TW';
       utterance.rate = 1;
@@ -226,24 +244,16 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
       };
       speechSynthesis.speak(utterance);
     }
-  
+
     function showTemporaryMessage(message, color = 'green') {
       result.textContent = message;
       result.style.color = color;
 
-      clearTimeout(showTemporaryMessage.timeoutId);
-      showTemporaryMessage.timeoutId = setTimeout(() => {
+      // 設定訊息顯示時間為五秒鐘，並等待五秒後清除訊息
+      setTimeout(() => {
         result.textContent = '請掃描票券或輸入票號';
         result.style.color = 'black';
       }, 5000);
-    }
-
-    function convertToChinese(number) {
-      const chineseNumbers = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-      return number.toString().split('').map(digit => {
-        const n = parseInt(digit);
-        return (isNaN(n) ? '' : chineseNumbers[n]);
-      }).join('');
     }
 
     function handleCode(code) {
@@ -255,140 +265,127 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
 
       code = code.trim().toLowerCase();
       if (!issuedTickets.includes(code)) {
-        showTemporaryMessage('❌ 非法票券或無效代碼', 'red');
+        result.textContent = `❌ 無效票號：${code}`;
+        result.style.color = 'red';
         return;
       }
       if (enteredTickets.has(code)) {
-        showTemporaryMessage('⚠️ 票券已入場', 'orange');
+        result.textContent = `⚠️ 已入場過：${code}`;
+        result.style.color = 'orange';
         return;
       }
 
       enteredTickets.add(code);
+      const time = new Date().toLocaleTimeString();
+      const lastTwo = code.slice(-2);  // 取得票號最後兩碼
+      const customMsg = customMessages[code] || `歡迎 721班第${lastTwo}號入場！`;
+      showTemporaryMessage(`✅ 入場成功：${customMsg}`, 'green');
+      speak(customMsg);
       updateStats();
 
-      const customMsg = customMessages[code];
-      let speakText = '';
-
-      if (customMsg) {
-        speakText = customMsg;
-        showTemporaryMessage(customMsg, 'blue');
-      } else {
-        // 轉換票號末五碼為中文數字
-        const lastFive = code.slice(-5);
-        const chineseNum = convertToChinese(lastFive);
-        speakText = `歡迎 ${chineseNum} 號貴賓入場！`;
-        showTemporaryMessage(speakText, 'green');
-      }
-      speak(speakText);
-
-      // 更新入場列表
+      // 列出入場紀錄
       const li = document.createElement('li');
-      li.textContent = code;
+      li.textContent = `${time} - ${customMsg}`;
       entryList.appendChild(li);
     }
 
+    // 手動輸入送出
     function manualEntry() {
       const input = document.getElementById('manual-code');
-      const code = input.value.trim();
-      if (code === '') {
+      if (!input.value.trim()) {
         alert('請輸入票號');
         return;
       }
-      handleCode(code);
+      handleCode(input.value);
       input.value = '';
-      input.focus();
     }
 
-    function resetEntries() {
-      if (!confirm('確定要重置所有入場紀錄嗎？')) return;
-
-      enteredTickets.clear();
-      updateStats();
-      entryList.innerHTML = '';
-      showTemporaryMessage('已重置入場紀錄', 'black');
-    }
-
+    // 下載TXT檔
     function downloadTXT() {
       if (enteredTickets.size === 0) {
-        alert('目前無入場紀錄可下載');
+        alert('尚無入場紀錄，無法下載');
         return;
       }
-      const content = Array.from(enteredTickets).join('\n');
-      const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
-      const url = URL.createObjectURL(blob);
-
+      let content = '入場時間,票號,說明\n';
+      entryList.querySelectorAll('li').forEach(li => {
+        // 解析文字，格式：HH:MM:SS - 歡迎 xxx 入場！
+        const parts = li.textContent.split(' - ');
+        content += `${parts[0]},${extractCodeFromMsg(parts[1])},${parts[1]}\n`;
+      });
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
-      a.href = url;
-      a.download = '入場紀錄.txt';
-      document.body.appendChild(a);
+      a.href = URL.createObjectURL(blob);
+      a.download = `入場紀錄_${new Date().toISOString().slice(0,10)}.txt`;
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(a.href);
     }
 
+    // 從訊息中反推票號
+    function extractCodeFromMsg(msg) {
+      for (let code of enteredTickets) {
+        if (msg.includes(code) || msg.includes(code.slice(-2))) {
+          return code;
+        }
+      }
+      return '';
+    }
+
+    // 重置入場紀錄
+    function resetEntries() {
+      if (!confirm('確定要重置入場紀錄嗎？此動作無法復原。')) return;
+      enteredTickets.clear();
+      entryList.innerHTML = '';
+      updateStats();
+      result.textContent = '入場紀錄已重置';
+      result.style.color = 'blue';
+    }
+
+    // 音訊開關
     function toggleAudio() {
       audioEnabled = !audioEnabled;
-      const btn = document.getElementById('start-audio');
-      if (audioEnabled) {
-        btn.textContent = '🔊 朗讀已啟用';
-        btn.style.backgroundColor = '#28a745';
-      } else {
-        btn.textContent = '🔇 朗讀已禁用';
-        btn.style.backgroundColor = '#6c757d';
-        speechSynthesis.cancel();
-        isSpeaking = false;
-      }
+      document.getElementById('start-audio').textContent = audioEnabled ? '🔊 朗讀已啟用' : '🔇 朗讀已禁用';
     }
 
-    // Quagga 初始化
+    // QuaggaJS 初始化攝影機掃描
     function startScanner() {
-      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-        result.textContent = "📵 您的瀏覽器不支援攝影機掃描";
-        return;
-      }
-
+      const videoContainer = document.getElementById('video-container');
       Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#video-container'),
+        inputStream : {
+          name : "Live",
+          type : "LiveStream",
+          target: videoContainer,
           constraints: {
-            facingMode: "environment",
-            width: { min: 640 },
-            height: { min: 480 }
+            width: 640,
+            height: 480,
+            facingMode: "environment" // 背面攝影機
           }
         },
-        decoder: {
-          readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader", "i2of5_reader"]
-        },
-        locate: true,
-        numOfWorkers: navigator.hardwareConcurrency || 4,
-        frequency: 10
-      }, function(err) {
-        if (err) {
-          console.error(err);
-          result.textContent = "🚫 攝影機啟動失敗";
-          return;
+        decoder : {
+          readers : ["code_128_reader","ean_reader","ean_8_reader","code_39_reader","code_39_vin_reader","codabar_reader","upc_reader","upc_e_reader","i2of5_reader","2of5_reader","code_93_reader"]
         }
-        Quagga.start();
-        result.textContent = "📡 請掃描票券條碼";
-        result.style.color = 'black';
+      }, function(err) {
+          if (err) {
+              console.log(err);
+              result.textContent = '❌ 攝影機啟動失敗，請允許攝影機權限並重新整理頁面';
+              result.style.color = 'red';
+              return;
+          }
+          Quagga.start();
+          result.textContent = '請掃描票券或輸入票號';
+          result.style.color = 'black';
       });
 
       Quagga.onDetected(data => {
-        if (!data || !data.codeResult || !data.codeResult.code) return;
-        const code = data.codeResult.code;
-        // 因條碼可能有大小寫及前後空白，這邊強制小寫並trim
-        handleCode(code.toLowerCase().trim());
+        if(data && data.codeResult && data.codeResult.code) {
+          handleCode(data.codeResult.code);
+        }
       });
     }
 
-    // 初始化
     window.onload = () => {
-      result.textContent = '請掃描票券或輸入票號';
       updateStats();
       startScanner();
-    };
+    }
   </script>
 </body>
 </html>
