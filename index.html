@@ -238,7 +238,7 @@ const customMessages = {
       setTimeout(() => {
         result.textContent = '請掃描票券或輸入票號';
         result.style.color = 'black';
-      }, 5000);
+      }, 2000);
     }
 
     function handleCode(code) {
@@ -307,7 +307,7 @@ const customMessages = {
       const blob = new Blob([txtContent], { type: 'text/plain' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "entry_records.txt";
+      link.download = "list.txt";
       link.click();
     }
 
@@ -350,8 +350,6 @@ const customMessages = {
   result.textContent = '✅ 攝影機啟動，請掃描票券';
   result.style.color = 'green';
 });
-
-  
         Quagga.onDetected(function (data) {
           const code = data.codeResult.code;
           handleCode(code);
