@@ -238,7 +238,7 @@ const customMessages = {
       setTimeout(() => {
         result.textContent = '請掃描票券或輸入票號';
         result.style.color = 'black';
-      }, 2000);
+      }, 5000);
     }
 
     function handleCode(code) {
@@ -326,19 +326,13 @@ const customMessages = {
         videoElement.srcObject = stream;
   
         Quagga.init({
-          inputStream:
+          inputStream: {
             type: "LiveStream",
-            target: document.querySelector("video"),
-            constraints: {
-             width: { ideal: 1280 },
-             height: { ideal: 720 },
+            target: videoElement,
+            constraints: { width: 640, height: 480 }
           },
           decoder: {
             readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
-          },
-          locator: {
-            patchSize: "medium",
-            halfSample: false
           }
         }, function (err) {
           if (err) {
