@@ -197,7 +197,7 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
       'tcjhs11372143': '歡迎 總導演 溫宜芳 入場！'
     };
 
-    const enteredTickets = new Set();
+        const enteredTickets = new Set();
     const result = document.getElementById('scan-result');
     const totalCount = document.getElementById('total-count');
     const enteredCount = document.getElementById('entered-count');
@@ -212,24 +212,21 @@ tcjhs11372146`.trim().split('\n').map(s => s.trim().toLowerCase());
       enteredCount.textContent = enteredTickets.size;
       remainingCount.textContent = issuedTickets.length - enteredTickets.size;
     }
-
+      
     function speak(text) {
-      if (!audioEnabled || isSpeaking) return;
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-TW';
       utterance.rate = 1;
       utterance.pitch = 1;
-
       utterance.onstart = function() {
-        isSpeaking = true;
+        isSpeaking = true; // 標記為正在朗讀
       };
       utterance.onend = function() {
-        isSpeaking = false;
+        isSpeaking = false; // 朗讀完成，標記為未朗讀
       };
       speechSynthesis.speak(utterance);
     }
-
+  
     function showTemporaryMessage(message, color = 'green') {
       result.textContent = message;
       result.style.color = color;
