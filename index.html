@@ -1,284 +1,275 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>小吳組 表藝課 入場系統</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-  <style>
-    body {
-      font-family: 'Noto Sans TC', sans-serif;
-      margin: 0;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>小吳組 表藝課 入場紀錄系統</title>
+<style>
+  /* 基本重置 */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 20px;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  #container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.1);
+  }
+  form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  input[type="text"] {
+    flex-grow: 1;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 2px solid #0078d7;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #004a9f;
+  }
+  button {
+    padding: 10px 18px;
+    background-color: #0078d7;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: #004a9f;
+  }
+  #voiceBtn {
+    background-color: #28a745;
+  }
+  #voiceBtn.listening {
+    background-color: #dc3545;
+  }
+  #stats {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  #entryList {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    border-radius: 4px;
+    background-color: #fafafa;
+  }
+  #entryList li {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    font-family: monospace;
+  }
+  #entryList li:last-child {
+    border-bottom: none;
+  }
+  @media (max-width: 1024px) {
+    /* 平板與小螢幕裝置，保持版面不變形 */
+    #container {
       padding: 20px;
-      background-color: #f0f4f8;
-      color: #333;
+      max-width: 100%;
+      margin: 0 10px;
     }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      justify-content: center;
-    }
-    .panel {
-      flex: 1 1 400px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    h2 {
-      border-left: 6px solid #007bff;
-      padding-left: 10px;
-      font-size: 20px;
-    }
-    .video-container {
-      width: 100%;
-      height: auto;
-      border: 2px solid #007bff;
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: black;
-    }
-    video {
-      width: 100%;
-      height: auto;
-    }
-    .result {
-      margin-top: 10px;
-      font-weight: bold;
+    form {
+      flex-wrap: nowrap;
     }
     input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      box-sizing: border-box;
-      font-size: 16px;
+      font-size: 1rem;
     }
     button {
-      margin-top: 5px;
-      padding: 10px 15px;
-      font-size: 16px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
+      font-size: 1rem;
+      padding: 10px 14px;
     }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .stats {
-      margin-top: 15px;
-      line-height: 1.8;
-    }
-    ul#entry-list {
-      max-height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 6px;
-      background: #f9f9f9;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
+  <div id="container">
+    <h1>小吳組 表藝課 入場紀錄系統</h1>
+    <form id="entryForm" autocomplete="off" onsubmit="return false;">
+      <input id="codeInput" type="text" placeholder="請輸入或掃描入場碼" autofocus />
+      <button id="voiceBtn" type="button" title="語音輸入">🎤</button>
+      <button id="addBtn" type="submit">加入</button>
+    </form>
 
-  <div class="container">
-    <div class="panel">
-      <h2>🎥 攝影機掃描</h2>
-      <div class="video-container">
-        <div id="video-container">
-          <video autoplay playsinline muted></video>
-        </div>
-      </div>
-      <div class="result" id="scan-result">攝影機初始化中...</div>
-      <button id="start-audio" onclick="toggleAudio()">🔇 禁用朗讀中</button>
+    <div id="stats">
+      已入場：<span id="count">0</span> 人
     </div>
 
-    <div class="panel">
-      <h2>⌨️ 手動輸入票號</h2>
-      <input type="text" id="manual-code" placeholder="輸入票號如 tcjhs113XXXXX" />
-      <button onclick="manualEntry()">送出</button>
+    <ul id="entryList" aria-live="polite" aria-label="入場紀錄清單"></ul>
 
-      <h2>📊 入場統計資訊</h2>
-      <div class="stats">
-        <div>總發行：<span id="total-count"></span></div>
-        <div>已入場：<span id="entered-count">0</span></div>
-        <div>未入場：<span id="remaining-count">0</span></div>
-      </div>
-
-      <h2>📋 入場名單</h2>
-      <ul id="entry-list"></ul>
-
-      <button onclick="downloadTXT()">📥 下載入場紀錄</button>
-      <button onclick="resetEntries()">🔄 重置入場紀錄</button>
+    <div style="margin-top:20px; text-align:center;">
+      <button id="downloadBtn">下載入場紀錄 (.txt)</button>
+      <button id="resetBtn" style="margin-left:15px; background:#dc3545;">重置紀錄</button>
     </div>
   </div>
 
-  <script>
-    const issuedTickets = `
-tcjhs11372100
-tcjhs11372101
-tcjhs11372102
-tcjhs11372103
-tcjhs11372104
-tcjhs11372105
-tcjhs11372106
-tcjhs11372107
-tcjhs11372108
-tcjhs11372109
-tcjhs11372110
-tcjhs11372111
-tcjhs11372112
-tcjhs11372113
-tcjhs11372115
-tcjhs11372116
-tcjhs11372117
-tcjhs11372118
-tcjhs11372131
-tcjhs11372132
-tcjhs11372133
-tcjhs11372134
-tcjhs11372135
-tcjhs11372137
-tcjhs11372138
-tcjhs11372139
-tcjhs11372140
-tcjhs11372141
-tcjhs11372142
-tcjhs11372143
-tcjhs11372144
-tcjhs11372145
-tcjhs11372146`.trim().split('\n');
+<script>
+  const codeInput = document.getElementById('codeInput');
+  const addBtn = document.getElementById('addBtn');
+  const entryList = document.getElementById('entryList');
+  const countSpan = document.getElementById('count');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
 
-    const customMessages = {
-      'tcjhs11372100': '歡迎 男神老師 入場！',
-      'tcjhs11372102': '恭迎 執行長 王顗翔 入場！',
-      'tcjhs11372103': '有請 製作人 小吳 入場！',
-      'tcjhs11372112': '歡迎 前台經理 紹均 入場！',
-      'tcjhs11372143': '歡迎 總導演 溫宜芳 入場！'
-    };
+  // 使用 Set 儲存已入場票碼，避免重複
+  const enteredTickets = new Set();
 
-    const enteredTickets = new Set();
-    const result = document.getElementById('scan-result');
-    const totalCount = document.getElementById('total-count');
-    const enteredCount = document.getElementById('entered-count');
-    const remainingCount = document.getElementById('remaining-count');
-    const entryList = document.getElementById('entry-list');
-    totalCount.textContent = issuedTickets.length;
+  // 更新統計數字
+  function updateStats() {
+    countSpan.textContent = enteredTickets.size;
+  }
 
-    let audioEnabled = false;
-    let isSpeaking = false;
-
-    function updateStats() {
-      enteredCount.textContent = enteredTickets.size;
-      remainingCount.textContent = issuedTickets.length - enteredTickets.size;
+  // 加入入場碼
+  function addEntry() {
+    const code = codeInput.value.trim();
+    if (!code) {
+      alert('請輸入有效的入場碼');
+      return;
     }
-
-    function speak(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-TW';
-      utterance.onstart = () => isSpeaking = true;
-      utterance.onend = () => isSpeaking = false;
-      speechSynthesis.speak(utterance);
+    if (enteredTickets.has(code)) {
+      alert('此票碼已入場，請勿重複');
+      codeInput.value = '';
+      codeInput.focus();
+      return;
     }
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+    
+    // 新增 <li>，並且自訂屬性存時間與票碼
+    const li = document.createElement('li');
+    li.textContent = `${code} （${timeStr}）`;
+    li.setAttribute('data-code', code);
+    li.setAttribute('data-time', timeStr);
+    entryList.appendChild(li);
 
-    function showTemporaryMessage(message, color = 'green') {
-      result.textContent = message;
-      result.style.color = color;
-      setTimeout(() => {
-        result.textContent = '請掃描票券或輸入票號';
-        result.style.color = 'black';
-      }, 5000);
+    enteredTickets.add(code);
+    updateStats();
+    codeInput.value = '';
+    codeInput.focus();
+  }
+
+  addBtn.addEventListener('click', addEntry);
+
+  // 支援按 Enter 鍵加入
+  codeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addEntry();
     }
+  });
 
-    function handleCode(code) {
-      if (isSpeaking) {
-        result.textContent = "⏳ 請等朗讀完成後再掃描";
-        result.style.color = 'red';
-        return;
-      }
+  // 下載入場紀錄成 .txt
+  function downloadTXT() {
+    let content = '小吳組 表藝課 入場紀錄\n\n';
+    entryList.querySelectorAll('li').forEach(li => {
+      const code = li.getAttribute('data-code');
+      const time = li.getAttribute('data-time');
+      content += `${code} - ${time}\n`;
+    });
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    // 用當天日期作檔名
+    a.download = `入場紀錄_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  downloadBtn.addEventListener('click', downloadTXT);
 
-      code = code.trim().toLowerCase();
-      if (!issuedTickets.includes(code)) {
-        showTemporaryMessage(`❌ 無效票號：${code}`, 'red');
-        return;
-      }
-      if (enteredTickets.has(code)) {
-        showTemporaryMessage(`⚠️ 已入場過：${code}`, 'orange');
-        return;
-      }
-
-      enteredTickets.add(code);
-      const time = new Date().toLocaleTimeString();
-      const name = customMessages[code] || `✅ 歡迎 ${code} 入場！`;
-      const li = document.createElement('li');
-      li.textContent = `${code} (${time})`;
-      entryList.appendChild(li);
-      showTemporaryMessage(name);
+  // 重置入場紀錄
+  function resetEntries() {
+    if (confirm('確定要重置所有入場紀錄嗎？')) {
+      entryList.innerHTML = '';
+      enteredTickets.clear();
       updateStats();
-      if (audioEnabled) {
-        speak(name);
+      codeInput.focus();
+    }
+  }
+  resetBtn.addEventListener('click', resetEntries);
+
+  // 語音輸入功能 Web Speech API
+  let recognition;
+  let listening = false;
+
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW'; // 語言設定：繁體中文
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.trim();
+      // 直接帶入文字框
+      codeInput.value = transcript;
+      addEntry();
+      toggleVoiceBtn(false);
+    };
+    recognition.onerror = function(event) {
+      alert('語音輸入發生錯誤: ' + event.error);
+      toggleVoiceBtn(false);
+    };
+    recognition.onend = function() {
+      toggleVoiceBtn(false);
+    };
+  } else {
+    voiceBtn.disabled = true;
+    voiceBtn.title = '您的瀏覽器不支援語音輸入';
+  }
+
+  function toggleVoiceBtn(isListening) {
+    listening = isListening;
+    if (listening) {
+      voiceBtn.classList.add('listening');
+      voiceBtn.textContent = '🎙️';
+    } else {
+      voiceBtn.classList.remove('listening');
+      voiceBtn.textContent = '🎤';
+    }
+  }
+
+  voiceBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    if (listening) {
+      recognition.stop();
+      toggleVoiceBtn(false);
+    } else {
+      try {
+        recognition.start();
+        toggleVoiceBtn(true);
+      } catch (e) {
+        alert('語音輸入無法啟動，請稍後再試');
       }
     }
+  });
 
-    function manualEntry() {
-      const input = document.getElementById('manual-code');
-      const code = input.value;
-      input.value = '';
-      handleCode(code);
-    }
-
-    function toggleAudio() {
-      audioEnabled = !audioEnabled;
-      const btn = document.getElementById('start-audio');
-      btn.textContent = audioEnabled ? '🔊 朗讀啟用中' : '🔇 禁用朗讀中';
-    }
-
-    function downloadTXT() {
-      const lines = Array.from(enteredTickets).join('\n');
-      const blob = new Blob([lines], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'entry-record.txt';
-      link.click();
-    }
-
-    function resetEntries() {
-      if (confirm("確定要重置所有入場紀錄嗎？")) {
-        enteredTickets.clear();
-        entryList.innerHTML = '';
-        updateStats();
-        showTemporaryMessage("✅ 入場紀錄已重置", 'blue');
-      }
-    }
-
-    Quagga.init({
-      inputStream: {
-        type: "LiveStream",
-        target: document.querySelector('#video-container'),
-        constraints: {
-          width: 640,
-          height: 480,
-          facingMode: "environment"
-        }
-      },
-      decoder: {
-        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
-      }
-    }, function (err) {
-      if (err) {
-        result.textContent = "攝影機初始化失敗：" + err;
-        return;
-      }
-      Quagga.start();
-      result.textContent = "請掃描票券或輸入票號";
-    });
-
-    Quagga.onDetected((data) => {
-      const code = data.codeResult.code;
-      handleCode(code);
-    });
-  </script>
+</script>
 </body>
 </html>
