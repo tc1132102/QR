@@ -326,30 +326,31 @@ const customMessages = {
         videoElement.srcObject = stream;
   
         Quagga.init({
-          inputStream: {
-            type: "LiveStream",
-            target: videoElement,
-            constraints: {
-             width: 640,
-             height: 480,
-             facingMode: "environment" // 強制後鏡頭，適合掃描
-            }
+  inputStream: {
+    name: "Live",
+    type: "LiveStream",
+    target: document.querySelector('#video-container'),
+    constraints: {
+      width: 640,
+      height: 480,
+      facingMode: "environment"  // 強制使用後鏡頭
+    }
+  },
+  decoder: {
+    readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
+  }
+}, function(err) {
+  if (err) {
+    result.textContent = '🚫 攝影機初始化失敗：' + err;
+    result.style.color = 'red';
+    console.error(err);
+    return;
+  }
+  Quagga.start();
+  result.textContent = '✅ 攝影機啟動，請掃描票券';
+  result.style.color = 'green';
+});
 
-          },
-          decoder: {
-            readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
-          }
-        }, function (err) {
-          if (err) {
-            result.textContent = '🚫 攝影機初始化失敗：' + err;
-            result.style.color = 'red';
-            console.error(err);
-            return;
-          }
-          Quagga.start();
-          result.textContent = '✅ 攝影機啟動，請掃描票券';
-          result.style.color = 'green';
-        });
   
         Quagga.onDetected(function (data) {
           const code = data.codeResult.code;
