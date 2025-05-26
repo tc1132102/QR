@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>小吳組 表藝課 入場系統</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
@@ -17,6 +17,7 @@
       display: flex;
       justify-content: space-between;
       gap: 20px;
+      flex-wrap: wrap;
     }
 
     .panel {
@@ -24,7 +25,8 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      flex: 1; /* 讓各個面板寬度自適應 */
+      flex: 1;
+      min-width: 300px;
     }
 
     .video-container {
@@ -33,10 +35,9 @@
       align-items: center;
     }
 
-    /* 固定大小設置 */
     #video-container {
-      width: 640px;  /* 固定寬度 */
-      height: 480px; /* 固定高度 */
+      width: 640px;
+      height: 480px;
       margin-bottom: 20px;
       background: #000;
       border-radius: 8px;
@@ -46,7 +47,7 @@
     video {
       width: 100%;
       height: 100%;
-      object-fit: fill; /* 填滿容器，這會使得畫面完全充滿這個固定尺寸 */
+      object-fit: fill;
     }
 
     ul {
@@ -94,6 +95,13 @@
       margin: 10px 0;
     }
 
+    #scan-result {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       .panel {
         padding: 15px;
@@ -114,7 +122,7 @@
 <body>
 
   <div class="container">
-    <!-- 左側攝影機區域 -->
+    <!-- 攝影機掃描 -->
     <div class="panel">
       <h2>🎥 攝影機掃描</h2>
       <div class="video-container">
@@ -123,12 +131,13 @@
         </div>
       </div>
       <div class="result" id="scan-result">攝影機初始化中...</div>
+      <button id="start-audio" onclick="toggleAudio()">🔇 禁用朗讀中</button>
     </div>
 
-    <!-- 右側入場統計區域 -->
+    <!-- 手動與統計 -->
     <div class="panel">
       <h2>⌨️ 手動輸入票號</h2>
-      <input type="text" id="manual-code" placeholder="輸入票號如 tcjhs11372100" />
+      <input type="text" id="manual-code" placeholder="輸入票號如 tcjhs113XXXXX" />
       <button onclick="manualEntry()">送出</button>
 
       <h2>📊 入場統計資訊</h2>
@@ -140,6 +149,9 @@
 
       <h2>📋 入場名單</h2>
       <ul id="entry-list"></ul>
+
+      <button onclick="downloadTXT()">下載入場紀錄</button>
+      <button onclick="resetEntries()">🔄 重置入場紀錄</button>
     </div>
   </div>
 
@@ -178,31 +190,64 @@ tcjhs11372143
 tcjhs11372144
 tcjhs11372145
 tcjhs11372146`.trim().split('\n');
-
-    const customMessages = {
-      'tcjhs11372100': '🎉 VIP：歡迎 ⟪男神老師⟫ 入場！',
-      'tcjhs11372102': '💃 系統：恭迎 ⟪執行長 王顗翔⟫ 入場！',
-      'tcjhs11372103': '💃 系統：有請 ⟪製作人 小吳⟫ 入場！',
-      'tcjhs11372112': '💃 系統：歡迎 ⟪前台經理 紹均⟫ 入場！',
-      'tcjhs11372143': '💃 系統：歡迎 ⟪總導演 溫宜芳⟫ 入場！'
+  
+const customMessages = {
+      'tcjhs11372100': '歡迎 男神老師 入場！',
+      'tcjhs11372102': '恭迎 執行長 王顗翔 入場！',
+      'tcjhs11372103': '有請 製作人 小吳 入場！',
+      'tcjhs11372112': '歡迎 前台經理 紹均 入場！',
+      'tcjhs11372143': '歡迎 總導演 溫宜芳 入場！'
     };
 
     const enteredTickets = new Set();
-
     const result = document.getElementById('scan-result');
     const totalCount = document.getElementById('total-count');
     const enteredCount = document.getElementById('entered-count');
     const remainingCount = document.getElementById('remaining-count');
     const entryList = document.getElementById('entry-list');
-
     totalCount.textContent = issuedTickets.length;
+
+    let audioEnabled = false;
+    let isSpeaking = false; // 標記是否正在朗讀
 
     function updateStats() {
       enteredCount.textContent = enteredTickets.size;
       remainingCount.textContent = issuedTickets.length - enteredTickets.size;
     }
+      
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-TW';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.onstart = function() {
+        isSpeaking = true; // 標記為正在朗讀
+      };
+      utterance.onend = function() {
+        isSpeaking = false; // 朗讀完成，標記為未朗讀
+      };
+      speechSynthesis.speak(utterance);
+    }
+  
+    function showTemporaryMessage(message, color = 'green') {
+      result.textContent = message;
+      result.style.color = color;
+
+
+      // 設定訊息顯示時間為兩秒鐘，並等待兩秒後清除訊息
+      setTimeout(() => {
+        result.textContent = '請掃描票券或輸入票號';
+        result.style.color = 'black';
+      }, 5000);
+    }
 
     function handleCode(code) {
+      if (isSpeaking) {
+        result.textContent = "⏳ 請等朗讀完成後再掃描";
+        result.style.color = 'red';
+        return;
+      }
+
       code = code.trim().toLowerCase();
       if (!issuedTickets.includes(code)) {
         result.textContent = `❌ 無效票號：${code}`;
@@ -216,15 +261,22 @@ tcjhs11372146`.trim().split('\n');
       }
 
       enteredTickets.add(code);
-      const message = customMessages[code] || `✅ 歡迎 721${code.slice(-2)} 入場`;
-      result.textContent = message;
-      result.style.color = 'green';
+      const time = new Date().toLocaleTimeString();
+      const lastFive = code.slice(-2);  // 取得票號的最後兩碼
+      const chineseCode = convertToChinese(lastFive);  // 將票號轉為中文數字
+      const message = customMessages[code] || `歡迎 ${code.slice(-2)}號入場`;
+      
+      showTemporaryMessage(message);
 
       const li = document.createElement('li');
-      li.textContent = code.toUpperCase();
+      li.textContent = `${code.toUpperCase()} - ${time}`;
       entryList.appendChild(li);
 
       updateStats();
+
+      if (audioEnabled) {
+        speak(message);
+      }
     }
 
     function manualEntry() {
@@ -236,22 +288,51 @@ tcjhs11372146`.trim().split('\n');
       }
     }
 
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById('start-audio').textContent = audioEnabled ? '🔊 啟用朗讀中' : '🔇 禁用朗讀中';
+    }
+
+    function resetEntries() {
+      enteredTickets.clear();
+      entryList.innerHTML = '';
+      updateStats();
+    }
+
+    function downloadTXT() {
+      const txtContent = Array.from(enteredTickets)
+        .map(code => `${code}, ${new Date().toLocaleTimeString()}`)
+        .join("\n");
+
+      const blob = new Blob([txtContent], { type: 'text/plain' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "entry_records.txt";
+      link.click();
+    }
+
+    function convertToChinese(number) {
+      const chineseNumbers = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+      
+      // 確保傳入的數字為字串形式
+      return number.toString().split('').map(digit => chineseNumbers[parseInt(digit)]).join('');
+    }
+
+    // 初始化攝影機
     async function startScanner() {
       try {
-        // 訪問用戶攝影機
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const videoElement = document.querySelector('video');
         videoElement.srcObject = stream;
-
-        // 初始化 QuaggaJS 條碼掃描
+  
         Quagga.init({
           inputStream: {
             type: "LiveStream",
             target: videoElement,
-            constraints: { width: 640, height: 480 } // 增加分辨率來提高識別率
+            constraints: { width: 640, height: 480 }
           },
           decoder: {
-            readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // 調整條碼識別格式
+            readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
           }
         }, function (err) {
           if (err) {
@@ -264,18 +345,12 @@ tcjhs11372146`.trim().split('\n');
           result.textContent = '✅ 攝影機啟動，請掃描票券';
           result.style.color = 'green';
         });
-
-        // 條碼檢測
+  
         Quagga.onDetected(function (data) {
           const code = data.codeResult.code;
-          handleCode(code); // 處理掃描到的條碼
-          
-          enteredTickets.add(code);
-           const message = customMessages[code] || `✅ 歡迎 721${code.slice(-2)} 入場`;
-           result.textContent = message;
-           result.style.color = 'green';
+          handleCode(code);
         });
-
+  
       } catch (err) {
         result.textContent = '🚫 無法存取攝影機：' + err;
         result.style.color = 'red';
@@ -283,8 +358,9 @@ tcjhs11372146`.trim().split('\n');
         alert('無法啟動攝影機，請檢查權限或設備設定。');
       }
     }
-
+  
     startScanner();
+
   </script>
 
 </body>
